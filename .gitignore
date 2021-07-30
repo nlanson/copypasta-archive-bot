@@ -1,3 +1,4 @@
 /husky/target/
 
 /shepard/dist/
+/shepard/node_modules/
