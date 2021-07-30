@@ -48,6 +48,19 @@ export class Bot {
             let commentContent: String = comment.body.toLowerCase();
             if (!commentContent.includes("!shepard")) return;
 
+            /*
+                From here, the bot needs to parse the arguement given by the user and determine whether it 
+                is requesting a send or a save. 
+
+                A save will look something like this:
+                    !shepard save "name"
+                This will save the contents of the post or comment above under the name provided so it can 
+                be requested later.
+
+                A send will look something like this:
+                    !shepard send "name"
+                This will find the copy pasta saved under the name provided and reply with it.
+            */
             console.log("DETECTED");
         });
     }
