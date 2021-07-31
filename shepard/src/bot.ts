@@ -1,5 +1,5 @@
 //Dependencies
-import Snoowrap, { SnoowrapOptions, Submission } from 'snoowrap';
+import Snoowrap, { SnoowrapOptions, Submission, Comment } from 'snoowrap';
 import { CommentStream } from 'snoostorm';
 
 export class Bot {
@@ -10,6 +10,7 @@ export class Bot {
         this.reddit = new Snoowrap(this.loadBotCredentials());
         this.connectedAt = Date.now() / 1000;
         this.streamComments();
+        console.log("Bot connected.");
     }
 
     private loadBotCredentials(): SnoowrapOptions {
@@ -39,14 +40,14 @@ export class Bot {
 
     private streamComments() {
         const comments = new CommentStream(this.reddit, {
-            subreddit: "copypasta",
+            subreddit: "u_keijyu",
             pollTime: 3000
         });
 
         comments.on('item', (comment) => {
             if ( this.connectedAt > comment.created_utc ) return;
-            let commentContent: String = comment.body.toLowerCase();
-            if (!commentContent.includes("!shepard")) return;
+            let content: String = comment.body;
+            if (!content.includes("!shepard")) return;
 
             /*
                 From here, the bot needs to parse the arguement given by the user and determine whether it 
@@ -61,7 +62,35 @@ export class Bot {
                     !shepard send "name"
                 This will find the copy pasta saved under the name provided and reply with it.
             */
-            console.log("DETECTED");
+            let args: Array<String> = content.split(" ");
+
+            if (args[1] == 'save') {
+                let parent: string = comment.parent_id;
+                let name: String = args[2];
+                this.save(parent, name);
+            }
         });
+    }
+
+    private async save(parent: string, name: String) {
+        let content: any;
+        switch (true) {
+            case parent[1] == "1":
+                content = await this.reddit.getComment(parent).body;
+                break;
+            case parent[1] == "3":
+                //Not working yet. Cannot save post text.
+                content = await this.reddit.getSubmission(parent).body;
+                break;
+            default:
+                console.log("Invalid parent.");
+                return;
+        }
+
+        console.log(content);
+        
+        /*
+            From here, need to save into the database with the name as key.
+        */
     }
 }
