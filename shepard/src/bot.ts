@@ -80,7 +80,7 @@ export class Bot {
                 break;
             case parent[1] == "3":
                 //Not working yet. Cannot save post text.
-                content = await this.reddit.getSubmission(parent).body;
+                content = this.reddit.getSubmission(parent);
                 break;
             default:
                 console.log("Invalid parent.");
