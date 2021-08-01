@@ -2,3 +2,4 @@
 
 /shepard/dist/
 /shepard/node_modules/
+.env
