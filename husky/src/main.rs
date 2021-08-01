@@ -1,5 +1,7 @@
 #[macro_use] extern crate rocket;
 
+//See SQLITE https://rust-lang-nursery.github.io/rust-cookbook/database/sqlite.html
+
 //Save copypastas here.
 #[get("/<name>/<value>")]
 fn save(name: &str, value: &str) -> String {
