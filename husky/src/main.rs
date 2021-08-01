@@ -1,18 +1,30 @@
 #[macro_use] extern crate rocket;
-
-//See SQLITE https://rust-lang-nursery.github.io/rust-cookbook/database/sqlite.html
+pub mod db;
 
 //Save copypastas here.
 #[get("/<name>/<value>")]
 fn save(name: &str, value: &str) -> String {
+    let db = db::Database::new(String::from("./pastas.db"));
+    match db.add(name, value) {
+        Ok(_) => println!("Successfully added new pasta '{}'", name),
+        Err(db::PastaErr::DbErr(ref err)) => println!("Unsuccessful: {:?}", err)
+    }
+    
     format!("Saving '{}' as '{}'", value, name)
 }
 
 //Get copypastas here.
 #[get("/<name>")]
 fn send(name: &str) -> String {
-    format!("return: {}", name)
+    let db = db::Database::new(String::from("./pastas.db"));
+    match db.get(name) {
+        Ok(_) => println!("Success!"),
+        Err(db::PastaErr::DbErr(ref err)) => println!("Unsuccessful: {:?}", err)
+    }
+    
+    format!("Hello, {}", name)
 }
+
 
 #[launch]
 fn rocket() -> _ {
