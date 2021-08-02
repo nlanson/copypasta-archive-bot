@@ -17,12 +17,16 @@ fn save(name: &str, value: &str) -> String {
 #[get("/<name>")]
 fn send(name: &str) -> String {
     let db = db::Database::new(String::from("./pastas.db"));
+    let val: String;
     match db.get(name) {
-        Ok(_) => println!("Success!"),
-        Err(db::PastaErr::DbErr(ref err)) => println!("Unsuccessful: {:?}", err)
+        Ok(pasta) => val = pasta,
+        Err(db::PastaErr::DbErr(ref err)) => {
+            println!("Unsuccessful: {:?}", err);
+            val = String::from("db get unsuccessful")
+        }
     }
     
-    format!("Hello, {}", name)
+    format!("{}", val)
 }
 
 

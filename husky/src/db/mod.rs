@@ -23,8 +23,12 @@ impl Database {
         }
     }
     
+    //Adds a new pasta with key name and value content.
     pub fn add(&self, name: &str, content: &str) -> Result<(), PastaErr> {
         let connection = sqlite::open(&self.file)?;
+
+        //Inserts the params into the database.
+        //Need to check for duplicates.
         let mut db = connection.prepare("insert into pastas (name, value) values (?, ?);")?;
         db.bind(1, name)?;
         db.bind(2, content)?;
@@ -32,17 +36,13 @@ impl Database {
         Ok(())
     }
 
-    //Not yet working
-    //Returns error: "colum index out of range"
-    pub fn get(&self, name: &str) -> Result<(), PastaErr> {
+    //Returns the pasta with key name.
+    pub fn get(&self, name: &str) -> Result<String, PastaErr> {
         let connection = sqlite::open(&self.file)?;
-        let mut statement = connection.prepare("select * from pastas where name='?'")?;
-        statement.bind(1, name)?;
+        let mut db = connection.prepare("select * from pastas where name=?")?;
+        db.bind(1, name)?;
 
-        while let State::Row = statement.next()? {
-            println!("result");
-        }
-
-        Ok(())
+        db.next()?;
+        Ok(db.read::<String>(1)?)
     }
 }
