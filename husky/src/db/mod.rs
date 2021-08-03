@@ -28,13 +28,17 @@ impl Database {
         let connection = sqlite::open(&self.file)?;
         //Trying better methods.
         //Not working yet.
-        let statement = format!(
+        let mut db = connection.prepare(
+   "
+            if not exists (select * from pastas where name=?)
+            begin
+            insert into pastas (name, value) values (?, ?)
+            end
             "
-                select * from pastas where name={}
-                where not exists(insert into pastas (name, value) values ({}, {}));
-            ", name, name, content
-        );
-        connection.prepare(statement)?;
+        )?;
+        db.bind(1, name)?;
+        db.bind(2, name)?;
+        db.bind(3, content)?;
         Ok(())
         
 
