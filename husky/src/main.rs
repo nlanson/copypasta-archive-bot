@@ -12,19 +12,28 @@ fn save(name: &str, value: &str) -> String {
     let db = db::Database::new(String::from("./pastas.db"));
     
     //Add pasta
+    let flag: bool;
     match db.add(name, value) {
         //Successful
-        Ok(_) => println!("Successfully added new pasta '{}'", name),
+        Ok(_) => {
+            println!("Successfully added new pasta '{}'", name);
+            flag = true;
+        },
 
         //Database SQLITE error
-        Err(db::PastaErr::DbErr(ref err)) => println!("sqlite error: {:?}", err),
-
-        //User error. Most likely a duplicate key
-        Err(db::PastaErr::UsrErr(ref msg)) => println!("user error: {}", msg)
+        Err(db::PastaErr::DbErr(ref err)) => {
+            println!("Sqlite Error Code: {:?} | Message: {:?}", err.code, err.message);
+            flag = false;
+        }
     }
     
-    //Should return an error status code and error message any of the errors occur.
-    format!("Saving '{}' as '{}'", value, name)
+
+    if flag {
+        format!("Successful")
+    } else {
+        format!("Unsuccessful")
+    }
+    
 }
 
 //Get copypastas here.
@@ -40,12 +49,9 @@ fn send(name: &str) -> String {
 
         //Database SQLITE error
         Err(db::PastaErr::DbErr(ref err)) => {
-            println!("sqlite error: {:?}", err);
+            println!("Sqlite Error Code: {:?} | Message: {:?}", err.code, err.message);
             val = String::from("sqlite error")
-        },
-
-        //User error. Should never happen as pastas that dont exists are covered in Database errors.
-        Err(db::PastaErr::UsrErr(ref msg)) => { val = format!("user error: {:?}", msg) }
+        }
     }
     
     //Should return an error status code if val is sqlite error or user error.
