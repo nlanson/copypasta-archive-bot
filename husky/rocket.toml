@@ -1,0 +1,8 @@
+[debug]
+log_level = "critical"
+
+[staging]
+log_level = "critical"
+
+[release]
+log_level = "critical"
