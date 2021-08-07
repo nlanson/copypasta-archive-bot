@@ -23,6 +23,7 @@ fn rocket() -> _ {
 }
 
 //Save copypastas here
+//Request URL: http://<IPADDRESS>:8000/save/<key>/<name>/<value>
 #[get("/<key>/<name>/<value>")]
 fn save(key: &str, name: &str, value: &str) -> String {
     log(lvl::Info, &format!("Save Requested | '{}'", name));
@@ -55,6 +56,7 @@ fn save(key: &str, name: &str, value: &str) -> String {
 }
 
 //Get copypastas here
+//Request URL: http://<IPADDRESS>:8000/send/<key>/<name>
 #[get("/<key>/<name>")]
 fn send(key: &str, name: &str) -> String {
     log(lvl::Info, &format!("Send Requested | '{}'", name));
