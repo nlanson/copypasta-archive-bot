@@ -46,6 +46,17 @@ export class Bot {
         });
 
         comments.on('item', (comment) => {
+            /*
+                Maybe should change the keywords to
+                 
+                !send <pasta name> for sending pastas
+
+                and
+
+                !save <pasta name> for saving parent pastas
+                
+                for simplicity.
+            */
             if ( this.connectedAt > comment.created_utc ) return;
             let content: String = comment.body;
             if (!content.includes("!shepard")) return;
