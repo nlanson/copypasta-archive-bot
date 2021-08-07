@@ -11,7 +11,11 @@ use log::{
 //Start server
 #[launch]
 fn rocket() -> _ {
-    rocket::build()
+    let figment = rocket::Config::figment()
+        .merge(("address", "0.0.0.0"))
+        .merge(("log_level", "critical"));
+    
+    rocket::custom(figment)  
         .mount("/save", routes![save])
         .mount("/send", routes![send])
 }
