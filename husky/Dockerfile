@@ -14,4 +14,4 @@ CMD ["./husky"]
 # Issues
 #  - Cannot get the program to start with applied address configuration. 
 #    The program is able to use the selected log-level but is unable to 
-#    apply the inputted address config. (See rocket.toml)
+#    apply the inputted address config. (See rocket.toml for details)
