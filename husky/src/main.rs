@@ -1,6 +1,8 @@
-//Dependencies and Modules
+//Dependencies
 #[macro_use] extern crate rocket;
 use serde::{Serialize, Deserialize};
+
+//Modules
 mod db;
 mod log;
 use log::{
@@ -20,11 +22,16 @@ fn rocket() -> _ {
         .mount("/send", routes![send])
 }
 
-
 //Save copypastas here
-#[get("/<name>/<value>")]
-fn save(name: &str, value: &str) -> String {
+#[get("/<key>/<name>/<value>")]
+fn save(key: &str, name: &str, value: &str) -> String {
     log(lvl::Info, &format!("Save Requested | '{}'", name));
+
+    //Key check
+    if !check_key(key) {
+        let res = Response::new(String::from("error"), Some(String::from("Invalid auth key")));
+        return res.to_json();
+    }
     
     //Add pasta to db
     let db = db::Database::new(String::from("./pastas.db"));
@@ -48,9 +55,15 @@ fn save(name: &str, value: &str) -> String {
 }
 
 //Get copypastas here
-#[get("/<name>")]
-fn send(name: &str) -> String {
+#[get("/<key>/<name>")]
+fn send(key: &str, name: &str) -> String {
     log(lvl::Info, &format!("Send Requested | '{}'", name));
+
+    //Key check
+    if !check_key(key) {
+        let res = Response::new(String::from("error"), Some(String::from("Invalid auth key")));
+        return res.to_json();
+    }
     
     //Get pasta and send result.
     let db = db::Database::new(String::from("./pastas.db"));
@@ -89,5 +102,16 @@ impl Response {
     
     pub fn to_json(&self) -> String{
         serde_json::to_string(&self).unwrap()
+    }
+}
+
+fn check_key(key: &str) -> bool {
+    let hashed_key = "578fb4d629c3a508df141858e20bcdb3";
+    if format!("{:x}", md5::compute(key)) == hashed_key {
+        //If auth key is not equal to the digest, then return an error
+        log(lvl::Warning, "Invalid auth key detected.");
+        true
+    } else {
+        false
     }
 }

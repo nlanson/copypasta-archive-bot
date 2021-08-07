@@ -1,6 +1,7 @@
 //Dependencies
 import Snoowrap, { SnoowrapOptions, Submission, Comment } from 'snoowrap';
 import { CommentStream } from 'snoostorm';
+import axios from 'axios';
 
 export class Bot {
     private reddit: Snoowrap;
@@ -68,6 +69,9 @@ export class Bot {
                 let parent: string = comment.parent_id;
                 let name: String = args[2];
                 this.save(parent, name);
+            } else if (args[1] == 'send') {
+                let pasta = this.send(args[2]);
+                //Bot to reply with the pasta contents.
             }
         });
     }
@@ -87,9 +91,30 @@ export class Bot {
         }
 
         console.log(content);
-        
-        /*
-            From here, need to save into the database with the name as key.
+        let post = {
+            name: name,
+            value: content
+        };
+
+        //Change localhost to the Server IP for production.
+        axios
+            .get(`http://localhost:8000/save/${process.env.auth_key}/${post.name}/${post.value}`)
+            .then((res: any) => {
+                //Need to extract response status and handle any errors.
+                console.log(res);
+            })
+            .catch((error: any) => {
+                console.error(error)
+            });
+    }
+
+    private async send(name: String) {
+        /* 
+            Make a request to the back end http://ipaddress:8000/send/process.env.auth_key/name/
+
+            This will return a JSend with the pasta attached as the data payload.
+
+            Return this pasta for the bot to reply.
         */
     }
 }
