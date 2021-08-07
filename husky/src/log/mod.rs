@@ -1,6 +1,6 @@
-#[allow(dead_code)]
 use colored::*;
 
+#[allow(dead_code)]
 pub enum Level {
     Info,
     Warning,

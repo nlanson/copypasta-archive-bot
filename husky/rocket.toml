@@ -1,3 +1,11 @@
 [global]
 address = "0.0.0.0"
 log_level = "critical"
+
+[debug]
+address = "0.0.0.0"
+log_level = "critical"
+
+[release]
+address = "0.0.0.0"
+log_level = "critical"

@@ -8,11 +8,6 @@ use log::{
     print as log
 };
 
-/*
-    Todo:
-        - Return data in JSON format with success status etc. (See jSend specification)
-*/
-
 //Start server
 #[launch]
 fn rocket() -> _ {
