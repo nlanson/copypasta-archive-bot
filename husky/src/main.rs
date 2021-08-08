@@ -110,10 +110,10 @@ impl Response {
 fn check_key(key: &str) -> bool {
     let hashed_key = "578fb4d629c3a508df141858e20bcdb3";
     if format!("{:x}", md5::compute(key)) == hashed_key {
-        //If auth key is not equal to the digest, then return an error
-        log(lvl::Warning, "Invalid auth key detected.");
         true
     } else {
+        //If auth key is not equal to the digest, then return an error
+        log(lvl::Warning, "Invalid auth key detected.");
         false
     }
 }
