@@ -2,6 +2,7 @@
 import Snoowrap, { SnoowrapOptions, Submission, Comment } from 'snoowrap';
 import { CommentStream } from 'snoostorm';
 import axios from 'axios';
+import { log, Level } from './log';
 
 interface Payload {
     status: String,
@@ -22,7 +23,7 @@ export class Bot {
         this.reddit = new Snoowrap(this.loadBotCredentials());
         this.connectedAt = Date.now() / 1000;
         this.streamComments();
-        console.log("Bot connected.");
+        log(Level.Info, "Bot connected.");
     }
 
     private loadBotCredentials(): SnoowrapOptions {
@@ -64,18 +65,18 @@ export class Bot {
             let args: Array<String> = content.split(" ");
 
             if (args[0] == '!save') {
-                console.log("Save requested...")
+                log(Level.Info, `Save requested by u/${comment.author.name}`);
                 let saved = await this.save(comment.parent_id, args[1]);
-                if (!saved) console.log("    -> Save failed");
+                if (!saved) log(Level.Error, "Save failed");
                 return;
             } else if (args[0] == '!send') {
-                console.log("Send requested...")
+                log(Level.Info, `Send requested by u/${comment.author.name}`);
                 let pasta = await this.send(args[1]);
-                if (pasta.length != 0) comment.reply(pasta);
-                else console.log("    -> Pasta retrieval failed.");
+                if (pasta.length != 0) comment.reply(pasta).catch((err: any) => console.log(err.message));
+                else log(Level.Error, "Pasta retrieval failed");
                 return;
             } else {
-                console.log("Invalid comment.");
+                log(Level.Warning, "Invalid command");
                 return
             }
         });
@@ -92,7 +93,7 @@ export class Bot {
                 pasta = await this.reddit.getSubmission(parent).selftext;
                 break;
             default:
-                console.log("Invalid parent.");
+                log(Level.Warning, "Invalid parent. Aborting...");
                 return false;
         }
 
@@ -104,12 +105,11 @@ export class Bot {
                 let payload: Payload = res.data;
                 if (payload.status == 'success') success = true;
                 else {
-                    console.log(payload.data)
                     success = false;
                 }
             })
             .catch((error: any) => {
-                console.log(error);
+                console.log(error.message);
                 success = false;
             });
         return success;
@@ -128,7 +128,7 @@ export class Bot {
                 }
             })
             .catch((error: any) => {
-                console.error(error)
+                console.error(error.message);
             });
         
         return pasta;
