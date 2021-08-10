@@ -58,12 +58,15 @@ export class Bot {
         });
 
         comments.on('item', async (comment) => {
-            if ( this.connectedAt > comment.created_utc ) return;
-            let content: String = comment.body;
-            if (!content.includes("!save") && !content.includes("!send")) return;
-
+            //Extract commend into variable and split into args
+            let content: String = comment.body.toLowerCase();
             let args: Array<String> = content.split(" ");
 
+            //Stop processing if comment is older than bot start date or doesn't start with keyword
+            if ( this.connectedAt > comment.created_utc ) return;
+            if (args[0] != '!save' && args[0] != '!send') return; 
+
+            //Process save and send commands seperately
             if (args[0] == '!save') {
                 log(Level.Info, `Save requested by u/${comment.author.name}`);
                 let saved = await this.save(comment.parent_id, args[1]);
