@@ -46,7 +46,7 @@ export class Bot {
             return credentials;
         } 
         else {
-            console.log("Environment credentials not detected.");
+            log(Level.Error, "Environment credentials not detected. Exiting...");
             process.exit(1);
         }
     }
@@ -69,13 +69,13 @@ export class Bot {
             //Process save and send commands seperately
             if (args[0] == '!save') {
                 log(Level.Info, `Save requested by u/${comment.author.name}`);
-                let saved = await this.save(comment.parent_id, args[1]);
+                let saved = await this.save(comment.parent_id, args.slice(1, args.length).join(" "));
                 if (!saved) log(Level.Error, "Save failed");
                 return;
             } else if (args[0] == '!send') {
                 log(Level.Info, `Send requested by u/${comment.author.name}`);
-                let pasta = await this.send(args[1]);
-                if (pasta.length != 0) comment.reply(pasta).catch((err: any) => console.log(err.message));
+                let pasta = await this.send(args.slice(1, args.length).join(" "));
+                if (pasta.length != 0) comment.reply(pasta).catch((err: any) => log(Level.Error, err.message));
                 else log(Level.Error, "Pasta retrieval failed");
                 return;
             } else {
@@ -103,7 +103,7 @@ export class Bot {
         //Change localhost to the Server IP for production.
         let success: Boolean = false;
         await axios
-            .get(`http://localhost:8000/save/${process.env.auth_key}/${name}/${pasta}`)
+            .get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`)
             .then((res: any) => {
                 let payload: Payload = res.data;
                 if (payload.status == 'success') success = true;
@@ -112,7 +112,7 @@ export class Bot {
                 }
             })
             .catch((error: any) => {
-                console.log(error.message);
+                log(Level.Error, error.message);
                 success = false;
             });
         return success;
@@ -123,7 +123,7 @@ export class Bot {
         let pasta: string = '';
 
         await axios
-            .get(`http://localhost:8000/send/${process.env.auth_key}/${name}`)
+            .get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`)
             .then((res: any) => {
                 let payload: Payload = res.data;
                 if (payload.status == 'success') {
@@ -131,7 +131,7 @@ export class Bot {
                 }
             })
             .catch((error: any) => {
-                console.error(error.message);
+                log(Level.Error, error.message);
             });
         
         return pasta;

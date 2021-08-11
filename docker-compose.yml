@@ -1,0 +1,14 @@
+version: "3.9"
+services: 
+  redditbot:
+    image: nlanson/shepard
+    container_name: "ShepardBot"
+
+  db:
+    image: nlanson/husky
+    container_name: "PastaBackend"
+    volumes:
+      - "./husky/pastas.db:/app/pastas.db"
+    ports:
+      - "8000:8000"
+      # change to 8083:8000 for server production

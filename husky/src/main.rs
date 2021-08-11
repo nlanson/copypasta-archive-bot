@@ -35,7 +35,7 @@ fn save(key: &str, name: &str, value: &str) -> String {
     }
     
     //Add pasta to db
-    let db = db::Database::new(String::from("./pastas.db"));
+    let db = db::Database::new(String::from("./data.pastas.db"));
     let res: Response;
     match db.add(name, value) {
         //Successful
@@ -68,7 +68,7 @@ fn send(key: &str, name: &str) -> String {
     }
     
     //Get pasta and send result.
-    let db = db::Database::new(String::from("./pastas.db"));
+    let db = db::Database::new(String::from("./data/pastas.db"));
     let res: Response;
     match db.get(name) {
         //Success

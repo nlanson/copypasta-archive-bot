@@ -8,7 +8,7 @@ WORKDIR /app
 COPY --from=builder /app/target/release/husky .
 COPY --from=builder /app/pastas.db .
 EXPOSE 8000
-CMD ["./husky"]
+CMD ["/app/husky"]
 
 # Issues
 #  - Cannot get the program to start with applied address configuration. 
