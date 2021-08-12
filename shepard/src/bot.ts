@@ -9,12 +9,6 @@ interface Payload {
     data: any
 };
 
-/*
-    Todo:
-        - Multi word pasta names
-        - Better logging
-*/
-
 export class Bot {
     private reddit: Snoowrap;
     private connectedAt: number;
@@ -52,7 +46,7 @@ export class Bot {
     }
 
     private streamComments() {
-        const comments = new CommentStream(this.reddit, {
+        const comments: CommentStream = new CommentStream(this.reddit, {
             subreddit: "u_keijyu",
             pollTime: 3000
         });
@@ -87,7 +81,7 @@ export class Bot {
 
     //Function that extracts the parent comment and sends the save request to the database.
     private async save(parent: string, name: String): Promise<Boolean> {
-        let pasta: any;
+        let pasta: string;
         switch (true) {
             case parent[1] == "1":
                 pasta = await this.reddit.getComment(parent).body;
