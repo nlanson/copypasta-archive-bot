@@ -7,4 +7,4 @@ FROM rust as runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/husky .
 EXPOSE 8000
-CMD ["/app/husky"]
+CMD ["./husky"]

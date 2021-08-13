@@ -3,12 +3,14 @@ services:
   redditbot:
     image: nlanson/shepard
     container_name: "ShepardBot"
+    volumes:
+      - "./shepard/.env:/app/.env" # Copy local env file into build directory for use.
 
   db:
     image: nlanson/husky
     container_name: "PastaBackend"
     volumes:
-      - "./husky/pastas.db:/app/pastas.db"
+      - "./husky/pastas.db:/app/pastas.db" # Copy local Sqlite file into running directory for use.
     ports:
       - "8000:8000"
       # change to 8083:8000 for server production

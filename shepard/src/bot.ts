@@ -1,5 +1,5 @@
 //Dependencies
-import Snoowrap, { SnoowrapOptions, Submission, Comment } from 'snoowrap';
+import Snoowrap, { SnoowrapOptions, Comment } from 'snoowrap';
 import { CommentStream } from 'snoostorm';
 import axios from 'axios';
 import { log, Level } from './log';
@@ -14,10 +14,15 @@ export class Bot {
     private connectedAt: number;
 
     constructor() {
+        try {
         this.reddit = new Snoowrap(this.loadBotCredentials());
-        this.connectedAt = Date.now() / 1000;
-        this.streamComments();
+        } catch (err: any) {
+            log(Level.Error, `Failed to connect due to '${err.message}' Exiting...`);
+            process.exit(1);
+        }
         log(Level.Info, "Bot connected.");
+        this.connectedAt = Date.now() / 1000;
+        this.streamComments('u_keijyu'); //Set subreddit to stream comments
     }
 
     private loadBotCredentials(): SnoowrapOptions {
@@ -45,13 +50,14 @@ export class Bot {
         }
     }
 
-    private streamComments() {
+    private streamComments(subreddit: string) {
         const comments: CommentStream = new CommentStream(this.reddit, {
-            subreddit: "u_keijyu",
+            subreddit: subreddit,
             pollTime: 3000
         });
+        log(Level.Info, `Subscribed to ${subreddit}`);
 
-        comments.on('item', async (comment) => {
+        comments.on('item', async (comment: Comment) => {
             //Extract commend into variable and split into args
             let content: String = comment.body.toLowerCase();
             let args: Array<String> = content.split(" ");
