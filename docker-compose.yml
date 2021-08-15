@@ -5,6 +5,8 @@ services:
     container_name: "ShepardBot"
     volumes:
       - "./shepard/.env:/app/.env" # Copy local env file into build directory for use.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   db:
     image: nlanson/husky
