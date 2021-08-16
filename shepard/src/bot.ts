@@ -4,6 +4,12 @@ import { CommentStream } from 'snoostorm';
 import axios from 'axios';
 import { log, Level } from './log';
 
+/*
+Todo:
+    Gather the types of error messages that can be returned by the backend.
+    Put this in an enum to match and reply accordingly.
+*/
+
 interface Payload {
     status: String,
     data: any
@@ -22,7 +28,7 @@ export class Bot {
         }
         log(Level.Info, "Bot connected.");
         this.connectedAt = Date.now() / 1000;
-        this.streamComments('copypasta'); //Set subreddit to stream comments
+        this.streamComments('u_keijyu'); //Set subreddit to stream comments
     }
 
     private loadBotCredentials(): SnoowrapOptions {
@@ -124,8 +130,8 @@ export class Bot {
         //Change localhost to the Server IP for production.
         let success: Boolean = false;
         await axios
-            //.get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`)
-            .get(`http://localhost:8000/save/${process.env.auth_key}/${name}/${pasta}`)
+            .get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`)
+            //.get(`http://localhost:8000/save/${process.env.auth_key}/${name}/${pasta}`) //For local testing outside of docker
             .then((res: any) => {
                 let payload: Payload = res.data;
                 if (payload.status == 'success') success = true;
@@ -145,8 +151,8 @@ export class Bot {
         let pasta: string = '';
 
         await axios
-            //.get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`)
-            .get(`http://localhost:8000/send/${process.env.auth_key}/${name}`)
+            .get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`)
+            //.get(`http://localhost:8000/send/${process.env.auth_key}/${name}`) //For local testing outside of docker
             .then((res: any) => {
                 let payload: Payload = res.data;
                 if (payload.status == 'success') {

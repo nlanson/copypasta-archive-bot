@@ -36,7 +36,7 @@ fn save(key: &str, name: &str, value: &str) -> String {
     
     //Add pasta to db
     let db = db::Database::new(String::from("./pastas.db"));
-    let res: Response;
+    let mut res: Response;
     match db.add(name, value) {
         //Successful
         Ok(_) => {
@@ -47,7 +47,14 @@ fn save(key: &str, name: &str, value: &str) -> String {
         //Database SQLITE error
         Err(db::PastaErr::DbErr(ref err)) => {
             log(lvl::Error, &format!("Failed | {:?}", err.message));
-            res = Response::new(String::from("fail"), None); //Want to read and return the error message here.
+            res = Response::new(String::from("fail"), None);
+
+            match &err.message {
+                Some(msg) => {
+                    res.data = Some(msg.clone());
+                },
+                None => { }
+            }
         }
     }
 
@@ -69,7 +76,7 @@ fn send(key: &str, name: &str) -> String {
     
     //Get pasta and send result.
     let db = db::Database::new(String::from("./pastas.db"));
-    let res: Response;
+    let mut res: Response;
     match db.get(name) {
         //Success
         Ok(pasta) => {
@@ -80,7 +87,14 @@ fn send(key: &str, name: &str) -> String {
         //Database SQLITE error
         Err(db::PastaErr::DbErr(ref err)) => {
             log(lvl::Error, &format!("Failed | {:?}", err.message));
-            res = Response::new(String::from("fail"), None); //Want to read and return the error message here.
+            res = Response::new(String::from("fail"), None);
+
+            match &err.message {
+                Some(msg) => {
+                    res.data = Some(msg.clone());
+                },
+                None => { }
+            }
         }
     }
     
@@ -102,11 +116,13 @@ impl Response {
         }
     }
     
-    pub fn to_json(&self) -> String{
+    pub fn to_json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
 }
 
+//This function will check the key sent as part of the request and validate it against the hashed key stored below.
+//If the key sent in hashes into the same stored hashed key the request can continue.
 fn check_key(key: &str) -> bool {
     let hashed_key = "578fb4d629c3a508df141858e20bcdb3";
     if format!("{:x}", md5::compute(key)) == hashed_key {
