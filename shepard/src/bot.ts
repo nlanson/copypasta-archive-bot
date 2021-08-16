@@ -22,7 +22,7 @@ export class Bot {
         }
         log(Level.Info, "Bot connected.");
         this.connectedAt = Date.now() / 1000;
-        this.streamComments('copypasta'); //Set subreddit to stream comments
+        this.streamComments('u_keijyu'); //Set subreddit to stream comments
     }
 
     private loadBotCredentials(): SnoowrapOptions {
@@ -53,7 +53,7 @@ export class Bot {
     private streamComments(subreddit: string) {
         const comments: CommentStream = new CommentStream(this.reddit, {
             subreddit: subreddit,
-            pollTime: 3000
+            pollTime: 1500
         });
         log(Level.Info, `Subscribed to ${subreddit}`);
 
@@ -68,25 +68,46 @@ export class Bot {
 
             //Process save and send commands seperately
             if (args[0] == '!save') {
+                //On save command
                 log(Level.Info, `Save requested by u/${comment.author.name}`);
-                let saved = await this.save(comment.parent_id, args.slice(1, args.length).join(" "));
-                if (!saved) log(Level.Error, "Save failed");
+
+                let key: string = args.slice(1, args.length).join(" ");
+                let saved = await this.savePasta(comment.parent_id, key);
+                if (saved) {
+                    this.reply2thread(comment, "Saved. Use the command " + "` !send "+ `${key}` + " ` to paste");
+                } else {
+                    log(Level.Error, "Save failed");
+                    this.reply2thread(comment, "Failed to save. Another pasta with the name " + "` " + key + " ` already exists.");
+                }
                 return;
+
             } else if (args[0] == '!send') {
+                //On send command
                 log(Level.Info, `Send requested by u/${comment.author.name}`);
-                let pasta = await this.send(args.slice(1, args.length).join(" "));
-                if (pasta.length != 0) comment.reply(pasta).catch((err: any) => log(Level.Error, err.message));
-                else log(Level.Error, "Pasta retrieval failed");
+
+                let key: string = args.slice(1, args.length).join(" ");
+                let pasta = await this.getPasta(key);
+                if (pasta.length != 0) {
+                    //If the pasta exists
+                    this.reply2thread(comment, pasta);
+                } else {
+                    //If the pasta doesn't exist
+                    log(Level.Error, "Pasta retrieval failed");
+                    this.reply2thread(comment, `The pasta you ordered does not exist. Try order some pizza instead.`)
+                }
+
                 return;
             } else {
+                //On invalid command
                 log(Level.Warning, "Invalid command");
-                return
+                return;
+
             }
         });
     }
 
     //Function that extracts the parent comment and sends the save request to the database.
-    private async save(parent: string, name: String): Promise<Boolean> {
+    private async savePasta(parent: string, name: String): Promise<Boolean> {
         let pasta: string;
         switch (true) {
             case parent[1] == "1":
@@ -103,7 +124,8 @@ export class Bot {
         //Change localhost to the Server IP for production.
         let success: Boolean = false;
         await axios
-            .get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`)
+            //.get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`)
+            .get(`http://localhost:8000/save/${process.env.auth_key}/${name}/${pasta}`)
             .then((res: any) => {
                 let payload: Payload = res.data;
                 if (payload.status == 'success') success = true;
@@ -119,11 +141,12 @@ export class Bot {
     }
 
     //Function that fetches the reeusted pasta from the database.
-    private async send(name: String): Promise<string> {
+    private async getPasta(name: String): Promise<string> {
         let pasta: string = '';
 
         await axios
-            .get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`)
+            //.get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`)
+            .get(`http://localhost:8000/send/${process.env.auth_key}/${name}`)
             .then((res: any) => {
                 let payload: Payload = res.data;
                 if (payload.status == 'success') {
@@ -135,5 +158,20 @@ export class Bot {
             });
         
         return pasta;
+    }
+
+    private async reply2thread(comment: Comment, msg: string): Promise<boolean> {
+        await comment.reply(msg)
+        .then(() => {
+            return true;
+        })
+        .catch((err) => {
+            log(Level.Error, err.message);
+            return false;
+        })
+        .finally(() => {
+            return false;
+        });
+        return false;
     }
 }

@@ -47,7 +47,7 @@ fn save(key: &str, name: &str, value: &str) -> String {
         //Database SQLITE error
         Err(db::PastaErr::DbErr(ref err)) => {
             log(lvl::Error, &format!("Failed | {:?}", err.message));
-            res = Response::new(String::from("fail"), None);
+            res = Response::new(String::from("fail"), None); //Want to read and return the error message here.
         }
     }
 
@@ -80,7 +80,7 @@ fn send(key: &str, name: &str) -> String {
         //Database SQLITE error
         Err(db::PastaErr::DbErr(ref err)) => {
             log(lvl::Error, &format!("Failed | {:?}", err.message));
-            res = Response::new(String::from("fail"), None);
+            res = Response::new(String::from("fail"), None); //Want to read and return the error message here.
         }
     }
     

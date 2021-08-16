@@ -1,0 +1,1 @@
+delete from pastas where name != "test";
