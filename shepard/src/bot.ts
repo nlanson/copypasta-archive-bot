@@ -15,6 +15,24 @@ interface Payload {
     data: any
 };
 
+interface DbResponse {
+    success: boolean,
+    err: Err,
+    data?: string
+}
+
+enum Err {
+    INVALID_PARENT,
+    DUPLICATE_EXISTS,
+    DOES_NOT_EXIST,
+    UNKNOWN,
+    NONE
+}
+
+function newDbRes(success: boolean, err: Err, data?: any): DbResponse {
+    return {success, err, data}
+}
+
 export class Bot {
     private reddit: Snoowrap;
     private connectedAt: number;
@@ -71,49 +89,60 @@ export class Bot {
             //Stop processing if comment is older than bot start date or doesn't start with keyword
             if ( this.connectedAt > comment.created_utc ) return;
             if (args[0] != '!save' && args[0] != '!send') return; 
+            let key: string = args.slice(1, args.length).join(" ");
 
-            //Process save and send commands seperately
+            //Run through respective pipe process.
             if (args[0] == '!save') {
-                //On save command
-                log(Level.Info, `Save requested by u/${comment.author.name}`);
 
-                let key: string = args.slice(1, args.length).join(" ");
-                let saved = await this.savePasta(comment.parent_id, key);
-                if (saved) {
-                    this.reply2thread(comment, "Saved. Use the command " + "` !send "+ `${key}` + " ` to paste");
-                } else {
+                log(Level.Info, `Save requested by u/${comment.author.name}`);
+                let saveStatus = await this.savePastaToDb(comment.parent_id, key);
+                if (saveStatus.success) await this.reply2thread(comment, "Saved. Use the command " + "` !send "+ `${key}` + " ` to paste");
+                else {
                     log(Level.Error, "Save failed");
-                    this.reply2thread(comment, "Failed to save. Another pasta with the name " + "` " + key + " ` already exists.");
+                    let msg: string;
+                    switch (+saveStatus.err) {
+                        //Filter through error reasons and set appropriate reply message.
+                        case Err.DUPLICATE_EXISTS:
+                            msg = "Failed to save. Another pasta with the name " + "` " + key + " ` already exists.";
+                            break;
+                        case Err.INVALID_PARENT:
+                            msg = "The text you tried to save is invalid.\nPlease retry with a post/comment with text only.";
+                            break;
+                        default:
+                            msg = "Unexpected error occured when saving.\nPlease contact u/keijyu if this issue persists.";
+                    }
+                    await this.reply2thread(comment, msg);
                 }
                 return;
 
             } else if (args[0] == '!send') {
-                //On send command
+
                 log(Level.Info, `Send requested by u/${comment.author.name}`);
-
-                let key: string = args.slice(1, args.length).join(" ");
-                let pasta = await this.getPasta(key);
-                if (pasta.length != 0) {
-                    //If the pasta exists
-                    this.reply2thread(comment, pasta);
-                } else {
-                    //If the pasta doesn't exist
+                let getStatus = await this.getPastaFromDb(key);
+                if (getStatus.success && getStatus.data) await this.reply2thread(comment, getStatus.data);
+                else {
                     log(Level.Error, "Pasta retrieval failed");
-                    this.reply2thread(comment, `The pasta you ordered does not exist. Try order some pizza instead.`)
+                    let msg: string;
+                    switch (+getStatus.err) {
+                        case Err.DOES_NOT_EXIST:
+                            msg = `The pasta you ordered does not exist. Try order some pizza instead.`;
+                            break;
+                        default:
+                            msg = "Unexpected error occured when saving.\nPlease contact u/keijyu if this issue persists.";
+                    }
+                    await this.reply2thread(comment, msg);
                 }
-
                 return;
+
             } else {
-                //On invalid command
                 log(Level.Warning, "Invalid command");
                 return;
-
             }
         });
     }
 
     //Function that extracts the parent comment and sends the save request to the database.
-    private async savePasta(parent: string, name: String): Promise<Boolean> {
+    private async savePastaToDb(parent: string, name: String): Promise<DbResponse> {
         let pasta: string;
         switch (true) {
             case parent[1] == "1":
@@ -124,46 +153,53 @@ export class Bot {
                 break;
             default:
                 log(Level.Warning, "Invalid parent. Aborting...");
-                return false;
+                return newDbRes(false, Err.INVALID_PARENT);
         }
 
-        //Change localhost to the Server IP for production.
-        let success: Boolean = false;
-        await axios
-            .get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`)
-            //.get(`http://localhost:8000/save/${process.env.auth_key}/${name}/${pasta}`) //For local testing outside of docker
-            .then((res: any) => {
-                let payload: Payload = res.data;
-                if (payload.status == 'success') success = true;
-                else {
-                    success = false;
+        try {
+            let res = await axios
+                .get(`http://localhost:8000/save/${process.env.auth_key}/${name}/${pasta}`);
+                //.get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`);
+            let payload: Payload = res.data;
+            if (payload.status == 'success') return newDbRes(true, Err.NONE);
+            else {
+                //Filter though error messages
+                switch (true) {
+                    case payload.data == "UNIQUE constraint failed: pastas.name":   
+                        return newDbRes(false, Err.DUPLICATE_EXISTS);
+                        break;
+                    default:
+                        return newDbRes(false, Err.UNKNOWN);
                 }
-            })
-            .catch((error: any) => {
-                log(Level.Error, error.message);
-                success = false;
-            });
-        return success;
+            }
+        } catch (error) {
+            log(Level.Error, error.message);
+            return newDbRes(false, Err.UNKNOWN)
+        }
     }
 
     //Function that fetches the reeusted pasta from the database.
-    private async getPasta(name: String): Promise<string> {
-        let pasta: string = '';
-
-        await axios
-            .get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`)
-            //.get(`http://localhost:8000/send/${process.env.auth_key}/${name}`) //For local testing outside of docker
-            .then((res: any) => {
-                let payload: Payload = res.data;
-                if (payload.status == 'success') {
-                    pasta = payload.data;
+    private async getPastaFromDb(name: String): Promise<DbResponse> {
+        try {
+            let res = await axios
+                .get(`http://localhost:8000/send/${process.env.auth_key}/${name}`);
+                //.get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`);
+            let payload: Payload = res.data;
+            if (payload.status == 'success') return newDbRes(true, Err.NONE, payload.data);
+            else {
+                //Filter through error messages
+                switch (true) {
+                    case payload.data == "cannot read a text column":
+                        return newDbRes(false, Err.DOES_NOT_EXIST);
+                        break;
+                    default:
+                        return newDbRes(false, Err.UNKNOWN);
                 }
-            })
-            .catch((error: any) => {
-                log(Level.Error, error.message);
-            });
-        
-        return pasta;
+            }
+        } catch (error) {
+            log(Level.Error, error.message);
+            return newDbRes(false, Err.UNKNOWN);
+        }
     }
 
     private async reply2thread(comment: Comment, msg: string): Promise<boolean> {
