@@ -1,16 +1,11 @@
-//Dependencies
-#[macro_use] extern crate rocket;
-use serde::{Serialize, Deserialize};
+#![feature(proc_macro_hygiene, decl_macro)]
+#[macro_use]
+extern crate rocket;
 
-//Modules
-mod db;
-mod log;
-use log::{
-    Level as lvl,
-    print as log
-};
+pub mod db;
+pub mod server;
+pub mod log;
 
-//Start server
 #[launch]
 fn rocket() -> _ {
     let figment = rocket::Config::figment()
@@ -18,118 +13,6 @@ fn rocket() -> _ {
         .merge(("log_level", "critical"));
     
     rocket::custom(figment)  
-        .mount("/save", routes![save])
-        .mount("/send", routes![send])
-}
-
-//Save copypastas here
-//Request URL: http://<IPADDRESS>:8000/save/<key>/<name>/<value>
-#[get("/<key>/<name>/<value>")]
-fn save(key: &str, name: &str, value: &str) -> String {
-    log(lvl::Info, &format!("Save Requested | '{}'", name));
-
-    //Key check
-    if !check_key(key) {
-        let res = Response::new(String::from("error"), Some(String::from("Invalid auth key")));
-        return res.to_json();
-    }
-    
-    //Add pasta to db
-    let db = db::Database::new(String::from("./pastas.db"));
-    let mut res: Response;
-    match db.add(name, value) {
-        //Successful
-        Ok(_) => {
-            log(lvl::Info, "Success");
-            res = Response::new(String::from("success"), None);
-        },
-
-        //Database SQLITE error
-        Err(db::PastaErr::DbErr(ref err)) => {
-            log(lvl::Error, &format!("Failed | {:?}", err.message));
-            res = Response::new(String::from("fail"), None);
-
-            match &err.message {
-                Some(msg) => {
-                    res.data = Some(msg.clone());
-                },
-                None => { }
-            }
-        }
-    }
-
-    //Return json string
-    res.to_json()
-}
-
-//Get copypastas here
-//Request URL: http://<IPADDRESS>:8000/send/<key>/<name>
-#[get("/<key>/<name>")]
-fn send(key: &str, name: &str) -> String {
-    log(lvl::Info, &format!("Send Requested | '{}'", name));
-
-    //Key check
-    if !check_key(key) {
-        let res = Response::new(String::from("error"), Some(String::from("Invalid auth key")));
-        return res.to_json();
-    }
-    
-    //Get pasta and send result.
-    let db = db::Database::new(String::from("./pastas.db"));
-    let mut res: Response;
-    match db.get(name) {
-        //Success
-        Ok(pasta) => {
-            log(lvl::Info, "Success");
-            res = Response::new(String::from("success"), Some(pasta));
-        },
-
-        //Database SQLITE error
-        Err(db::PastaErr::DbErr(ref err)) => {
-            log(lvl::Error, &format!("Failed | {:?}", err.message));
-            res = Response::new(String::from("fail"), None);
-
-            match &err.message {
-                Some(msg) => {
-                    res.data = Some(msg.clone());
-                },
-                None => { }
-            }
-        }
-    }
-    
-    //Return json string
-    res.to_json()
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Response {
-    status: String,
-    data: Option<String>
-}
-
-impl Response {
-    pub fn new(status: String, data: Option<String>) -> Self {
-        Self {
-            status,
-            data
-        }
-    }
-    
-    pub fn to_json(&self) -> String {
-        serde_json::to_string(&self).unwrap()
-    }
-}
-
-//This function will check the key sent as part of the request and validate it against the hashed key stored below.
-//If the key sent in hashes into the same stored hashed key the request can continue.
-fn check_key(key: &str) -> bool {
-    let hashed_key = "578fb4d629c3a508df141858e20bcdb3";
-    if format!("{:x}", md5::compute(key)) == hashed_key {
-        true
-    } else {
-        //If auth key is not equal to the digest, then return an error
-        log(lvl::Warning, "Invalid auth key detected.");
-        false
-    }
+        .mount("/save", routes![server::save::save])
+        .mount("/send", routes![server::send::send])
 }

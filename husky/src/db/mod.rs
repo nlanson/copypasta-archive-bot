@@ -43,3 +43,17 @@ impl Database {
         Ok(db.read::<String>(1)?)
     }
 }
+
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn add_pasta() {
+        assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn get_pasta() {
+        let key: String = String::from("test");
+    }
+}
