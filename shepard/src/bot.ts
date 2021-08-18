@@ -84,15 +84,18 @@ export class Bot {
             //Stop processing if comment is older than bot start date or doesn't start with keyword
             if ( this.connectedAt > comment.created_utc ) return;
             if (args[0] != '!save' && args[0] != '!send') return; 
+            if (args.length < 2) return;
             let key: string = args.slice(1, args.length).join(" ");
 
             //Run through respective pipe process.
             if (args[0] == '!save') {
-
                 log(Level.Info, `Save requested by u/${comment.author.name}`);
+
+                //Run the save process and then filter through the results.
                 let saveStatus = await this.savePastaToDb(comment.parent_id, key);
                 if (saveStatus.success) await this.reply2thread(comment, "Saved. Use the command " + "` !send "+ `${key}` + " ` to paste");
                 else {
+                    //Filter through the error type and set an appropriate failure message to reply
                     log(Level.Error, "Save failed");
                     let msg: string;
                     switch (+saveStatus.err) {
@@ -111,11 +114,12 @@ export class Bot {
                 return;
 
             } else if (args[0] == '!send') {
-
                 log(Level.Info, `Send requested by u/${comment.author.name}`);
+
                 let getStatus = await this.getPastaFromDb(key);
                 if (getStatus.success && getStatus.data) await this.reply2thread(comment, getStatus.data);
                 else {
+                    //Filter through the error type and set an appropriate failure message to reply
                     log(Level.Error, "Pasta retrieval failed");
                     let msg: string;
                     switch (+getStatus.err) {

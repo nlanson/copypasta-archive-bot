@@ -38,3 +38,14 @@ pub fn check_key(key: &str) -> bool {
         false
     }
 }
+
+mod tests{
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn key_check_failure() {
+        let key: String = String::from("this is an incorrect string");
+        assert_eq!(false, check_key(&key));
+    }
+}
