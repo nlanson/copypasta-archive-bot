@@ -4,11 +4,6 @@ import { CommentStream } from 'snoostorm';
 import axios from 'axios';
 import { log, Level } from './log';
 
-/*
-Todo:
-    Gather the types of error messages that can be returned by the backend.
-    Put this in an enum to match and reply accordingly.
-*/
 
 interface Payload {
     status: String,
