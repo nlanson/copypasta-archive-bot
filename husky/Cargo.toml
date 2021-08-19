@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# When running tests in this project, run them single threaded as they read and write to the same file.
+# cargo test -- --test-threads=1
 
 [dependencies]
 dotenv = "0.15.0"
