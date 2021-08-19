@@ -50,3 +50,16 @@ pub fn send(key: &str, name: &str) -> String {
     //Return json string
     res.to_json()
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn send_endpoint_success() {
+
+    }
+
+    #[test]
+    fn send_endpoint_not_found_failure() {
+        
+    }
+}

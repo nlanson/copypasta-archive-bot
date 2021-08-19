@@ -39,9 +39,24 @@ pub fn check_key(key: &str) -> bool {
     }
 }
 
+#[cfg(test)]
 mod tests{
-    #[allow(unused_imports)]
     use super::*;
+    use dotenv::dotenv;
+    use std::env;
+
+    fn get_auth_key() -> String {
+        //Reads test key from a .env file in the package root.
+        dotenv().expect(".env file not found");
+        let key: String = env::var("auth_key").unwrap();
+        key
+    }
+
+    #[test]
+    fn key_check_success() {
+        let key: String = get_auth_key();
+        assert_eq!(true, check_key(&key));
+    }
 
     #[test]
     fn key_check_failure() {

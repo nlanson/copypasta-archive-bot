@@ -50,3 +50,56 @@ pub fn save(key: &str, name: &str, value: &str) -> String {
     //Return json string
     res.to_json()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::Database;
+    use crate::server::util::Response;
+    use dotenv::dotenv;
+    use std::env;
+
+    fn get_auth_key() -> String {
+        //Reads test key from a .env file in the package root.
+        dotenv().expect(".env file not found");
+        let key: String = env::var("auth_key").unwrap();
+        key
+    }
+    
+    #[test]
+    fn save_endpoint_success() {
+        //Setup test data
+        let key: String = get_auth_key();
+        let name: String = String::from("testdata");
+        let pasta: String = String::from("This is a test pasta");
+
+        //Set exprected response
+        let expected_res: String = Response::new(String::from("success"), None).to_json();
+
+        //Run function and compare response to expected response
+        let res: String = save(&key, &name, &pasta);
+        assert_eq!(res, expected_res);
+
+        //Reset database
+        match Database::new(String::from("./pastas.db")).reset(){ _ => {}}
+    }
+
+    #[test]
+    fn save_endpoint_duplicate_failure() {
+        //Setup test data
+        let key: String = get_auth_key();
+        let name: String = String::from("test");
+        let pasta: String = String::from("This is a test pasta");
+
+        //Set exprected response
+        let expected_res: String = Response::new(String::from("fail"), Some(String::from("UNIQUE constraint failed: pastas.name"))).to_json();
+
+        //Run function and compare response to expected response
+        let res: String = save(&key, &name, &pasta);
+        assert_eq!(res, expected_res);
+
+        //Reset database
+        match Database::new(String::from("./pastas.db")).reset(){ _ => {}}
+
+    }
+}
