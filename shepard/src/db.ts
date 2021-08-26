@@ -6,6 +6,20 @@ interface Payload {
     data: any
 };
 
+interface SaveRequest {
+    key: string,
+    name: string,
+    pasta: string
+}
+interface SendRequest {
+    key: string,
+    name: string
+}
+
+interface Headers {
+    headers: any
+}
+
 export interface DbResponse {
     success: boolean,
     err: Err,
@@ -17,6 +31,7 @@ export enum Err {
     DUPLICATE_EXISTS,
     DOES_NOT_EXIST,
     UNKNOWN,
+    ENV_KEY_UNDETECTED,
     NONE
 }
 
@@ -31,10 +46,25 @@ export class DatabaseRequest {
 
     //Make the save request to the backend and return the result.
     public static async save(name: string, pasta: string): Promise<DbResponse> {
+        //Return if env keys are not detected.
+        if (!process.env.auth_key) return newDbRes(false, Err.ENV_KEY_UNDETECTED);
+         
+        //Set request params
+        let url: string = 'http://localhost:8000/save'; //http://host.docker.internal:8000/save
+        let data: SaveRequest = {
+            key: process.env.auth_key,
+            name: name,
+            pasta: pasta
+        };
+        let headers: Headers = {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }
+        
+        //Try the request
         try {
-            let res = await axios
-                .get(`http://localhost:8000/save/${process.env.auth_key}/${name}/${pasta}`);
-                //.get(`http://host.docker.internal:8000/save/${process.env.auth_key}/${name}/${pasta}`);
+            let res = await axios.post(url, data, headers);
             let payload: Payload = res.data;
             if (payload.status == 'success') return newDbRes(true, Err.NONE);
             else {
@@ -55,10 +85,23 @@ export class DatabaseRequest {
 
     //Make the send request to the backend and return the response
     public static async send(name: string): Promise<DbResponse> {
+        //Return if env keys are not detected.
+        if (!process.env.auth_key) return newDbRes(false, Err.ENV_KEY_UNDETECTED);
+         
+        //Set request params
+        let url: string = 'http://localhost:8000/send'; //http://host.docker.internal:8000/send
+        let data: SendRequest = {
+            key: process.env.auth_key,
+            name: name
+        };
+        let headers: Headers = {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }
+        
         try {
-            let res = await axios
-                .get(`http://localhost:8000/send/${process.env.auth_key}/${name}`);
-                //.get(`http://host.docker.internal:8000/send/${process.env.auth_key}/${name}`);
+            let res = await axios.post(url, data, headers);
             let payload: Payload = res.data;
             if (payload.status == 'success') return newDbRes(true, Err.NONE, payload.data);
             else {

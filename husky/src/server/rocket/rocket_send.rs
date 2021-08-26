@@ -13,7 +13,7 @@ use log::{
 
 //Get copypastas here
 //Request URL: http://<IPADDRESS>:8000/send/<key>/<name>
-#[get("/<key>/<name>")]
+//#[get("/<key>/<name>")]
 pub fn send(key: &str, name: &str) -> String {
     log(lvl::Info, &format!("Send Requested | '{}'", name));
 

@@ -18,7 +18,7 @@ export class Bot {
         }
         log(Level.Info, "Bot connected.");
         this.connectedAt = Date.now() / 1000;
-        this.streamComments('copypasta'); //Set subreddit to stream comments
+        this.streamComments('u_keijyu'); //Set subreddit to stream comments
     }
 
     private loadBotCredentials(): SnoowrapOptions {

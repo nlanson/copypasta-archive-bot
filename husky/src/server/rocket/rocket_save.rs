@@ -13,7 +13,7 @@ use log::{
 
 //Save copypastas here
 //Request URL: http://<IPADDRESS>:8000/save/<key>/<name>/<value>
-#[get("/<key>/<name>/<value>")]
+//#[get("/<key>/<name>/<value>")]
 pub fn save(key: &str, name: &str, value: &str) -> String {
     log(lvl::Info, &format!("Save Requested | '{}'", name));
 
