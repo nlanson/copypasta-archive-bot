@@ -68,7 +68,7 @@ export class DatabaseRequest {
             let payload: Payload = res.data;
             if (payload.status == 'success') return newDbRes(true, Err.NONE);
             else {
-                //Filter though error messages
+                //Filter though sqlite error messages and set it to an appropriate enum
                 switch (true) {
                     case payload.data == "UNIQUE constraint failed: pastas.name":   
                         return newDbRes(false, Err.DUPLICATE_EXISTS);

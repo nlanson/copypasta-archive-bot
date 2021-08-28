@@ -11,7 +11,8 @@ export class Bot {
 
     constructor() {
         try {
-        this.reddit = new Snoowrap(this.loadBotCredentials());
+            this.reddit = new Snoowrap(this.loadBotCredentials());
+            this.checkForDbKeys();
         } catch (err: any) {
             log(Level.Error, `Failed to connect due to '${err.message}' Exiting...`);
             process.exit(1);
@@ -44,6 +45,10 @@ export class Bot {
             log(Level.Error, "Environment credentials not detected. Exiting...");
             process.exit(1);
         }
+    }
+
+    private checkForDbKeys() {
+        if (!process.env.auth_key) throw new Error('Database keys not detected.');
     }
 
     private streamComments(subreddit: string) {
@@ -86,20 +91,8 @@ export class Bot {
         if (response.success) 
             await this.reply2thread(comment, "Saved. Use the command " + "` !send "+ `${name}` + " ` to paste");
         else {
-            //Filter through the error type and set an appropriate failure message to reply
             log(Level.Error, "Save failed");
-            let msg: string;
-            switch (+response.err) {
-                //Filter through error reasons and set appropriate reply message.
-                case Err.DUPLICATE_EXISTS:
-                    msg = "Failed to save. Another pasta with the name " + "` " + name + " ` already exists.";
-                    break;
-                case Err.INVALID_PARENT:
-                    msg = "The text you tried to save is invalid.\nPlease retry with a post/comment with text only.";
-                    break;
-                default:
-                    msg = "Unexpected error occured when saving.\nPlease contact u/keijyu if this issue persists.";
-            }
+            let msg: string = this.filterSaveErrors(response.err, name);
             await this.reply2thread(comment, msg);
         }
     }
@@ -112,16 +105,52 @@ export class Bot {
             await this.reply2thread(comment, response.data);
         else {
             log(Level.Error, "Pasta retrieval failed");
-            let msg: string;
-            switch (+response.err) {
-                case Err.DOES_NOT_EXIST:
-                    msg = `The pasta you ordered does not exist. Try order some pizza instead.`;
-                    break;
-                default:
-                    msg = "Unexpected error occured when saving.\nPlease contact u/keijyu if this issue persists.";
-            }
+            let msg: string = this.filterSendErrors(response.err);
             await this.reply2thread(comment, msg);
         }
+    }
+
+     /*
+        If there is a database error when saving, this function will filter what error it was and set an
+        appropriate error message to reply.
+    */
+    private filterSaveErrors(err: Err, name: string): string {
+        let msg: string;
+        switch (+err) {
+            //Filter through error reasons and set appropriate reply message.
+            case Err.DUPLICATE_EXISTS:
+                msg = "Failed to save. Another pasta with the name " + "` " + name + " ` already exists.";
+                break;
+            case Err.INVALID_PARENT:
+                msg = "The text you tried to save is invalid.\nPlease retry with a post/comment with text only.";
+                break;
+            case Err.ENV_KEY_UNDETECTED:
+                log(Level.Error, 'Environment keys to make database request were not found. Exiting...');
+                process.exit(1);
+                break;
+            default:
+                msg = "Unexpected error occured when saving. Please try again later.";
+        }
+
+        return msg;
+    }
+
+    //Sets reply message for when an error occurs in sending.
+    private filterSendErrors(err: Err): string {
+        let msg: string;
+        switch (+err) {
+            case Err.DOES_NOT_EXIST:
+                msg = `The pasta you ordered does not exist. Try order some pizza instead.`;
+                break;
+            case Err.ENV_KEY_UNDETECTED:
+                log(Level.Error, 'Environment keys to make database request were not found. Exiting...');
+                process.exit(1);
+                break;
+            default:
+                msg = "Unexpected error occured when sending pasta. Please try again later.";
+        }
+
+        return msg;
     }
 
     //Function that extracts the parent comment or post
