@@ -77,7 +77,7 @@ export class DatabaseRequest {
                         return newDbRes(false, Err.UNKNOWN);
                 }
             }
-        } catch (error: Error) {
+        } catch (error: any) {
             log(Level.Error, error.message);
             return newDbRes(false, Err.UNKNOWN)
         }
@@ -114,7 +114,7 @@ export class DatabaseRequest {
                         return newDbRes(false, Err.UNKNOWN);
                 }
             }
-        } catch (error: Error) {
+        } catch (error: any) {
             log(Level.Error, error.message);
             return newDbRes(false, Err.UNKNOWN);
         }
