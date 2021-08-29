@@ -65,23 +65,8 @@ pub async fn save(req: web::Json<SaveRequest>) -> impl Responder  {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::Database;
+    use crate::server::util;
     use actix_web::{test, App, http};
-    use dotenv::dotenv;
-    use std::env;
-
-    //Util function for tests to read the auth key.
-    fn get_auth_key() -> String {
-        //Reads test key from a .env file in the package root.
-        dotenv().expect(".env file not found");
-        let key: String = env::var("auth_key").unwrap();
-        key
-    }
-
-    //Util function that resets the database after sending in data.
-    fn reset_db() {
-        match Database::new(String::from("./pastas.db")).reset(){ _ => {}}
-    }
 
     /*
         This test function will test for a successful pasta save case.
@@ -98,7 +83,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/save")
             .set_json(&SaveRequest {
-                key: get_auth_key(),
+                key: util::testing_utils::get_auth_key(),
                 name: "Avocado".to_owned(),
                 pasta: "Guacamole".to_owned()
             })
@@ -123,7 +108,7 @@ mod tests {
         assert_eq!(response_body, expected_res);
 
         //Reset the database
-        reset_db();
+        util::testing_utils::reset_db();
     }
 
     
@@ -143,7 +128,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/save")
             .set_json(&SaveRequest {
-                key: get_auth_key(),
+                key: util::testing_utils::get_auth_key(),
                 name: "test".to_owned(),
                 pasta: "This will fail since there is already a pasta called test in the database by default".to_owned()
             })
@@ -168,6 +153,6 @@ mod tests {
         assert_eq!(response_body, expected_res);
 
         //Reset the database just in case
-        reset_db();
+        util::testing_utils::reset_db();
     }
 }

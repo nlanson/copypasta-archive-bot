@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};  
 use crate::{
     log
 };
@@ -38,6 +38,30 @@ pub fn check_key(key: &str) -> bool {
         false
     }
 }
+
+//Util functions used in unit tests.
+pub mod testing_utils {
+    use dotenv::dotenv;
+    use std::env;
+    use crate::db::Database;
+
+    
+    //Util function that resets the database after sending in data.
+    //To be used in test modules
+    pub fn reset_db() {
+        match Database::new(String::from("./pastas.db")).reset(){ _ => {}}
+    }
+
+    //Read the auth key for test functions
+    pub fn get_auth_key() -> String {
+        //Reads test key from a .env file in the package root.
+        dotenv().expect(".env file not found");
+        let key: String = env::var("auth_key").unwrap();
+        key
+    }
+}
+
+
 
 #[cfg(test)]
 mod tests{

@@ -65,16 +65,8 @@ pub async fn send(req: web::Json<SendRequest>) -> impl Responder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::server::util;
     use actix_web::{test, App, http};
-    use dotenv::dotenv;
-    use std::env;
-
-    fn get_auth_key() -> String {
-        //Reads test key from a .env file in the package root.
-        dotenv().expect(".env file not found");
-        let key: String = env::var("auth_key").unwrap();
-        key
-    }
 
     #[actix_rt::test]
     async fn send_actix_success() {
@@ -88,7 +80,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/send")
             .set_json(&SendRequest {
-                key: get_auth_key(),
+                key: util::testing_utils::get_auth_key(),
                 name: "test".to_owned(),
             })
         .to_request();
@@ -124,7 +116,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/send")
             .set_json(&SendRequest {
-                key: get_auth_key(),
+                key: util::testing_utils::get_auth_key(),
                 name: "This pasta does not exist and therefor, this test will fail".to_owned(),
             })
         .to_request();
