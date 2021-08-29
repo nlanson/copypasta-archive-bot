@@ -59,35 +59,47 @@ export class Bot {
         log(Level.Info, `Subscribed to ${subreddit}`);
 
         comments.on('item', async (comment: Comment) => {
-            //Extract commend into variable and split into args
-            let content: String = comment.body.toLowerCase();
-            let args: Array<String> = content.split(" ");
-
-            //Stop processing if comment is older than bot start date or doesn't start with keyword
-            if ( this.connectedAt > comment.created_utc ) return;
-            if (args[0] != '!save' && args[0] != '!send') return; 
-            if (args.length < 2) return;
-            let key: string = args.slice(1, args.length).join(" ");
-
-            //Run through respective pipe process.
-            if (args[0] == '!save') {
-                await this.save(comment, key);
-                return;
-            } else if (args[0] == '!send') {
-                await this.send(comment, key);
-                return;
-            } else {
-                log(Level.Warning, "Invalid command");
-                return;
-            }
+            //Pass comment into handler
+            await this.handleComment(comment);
         });
     }
 
+    //Comment handler function. Runs when a comment is detected.
+    //Parses args and returns from invalid comments to filter out the valid requests.
+    async handleComment(comment: Comment) {
+        //Extract commend into variable and split into args
+        let content: String = comment.body.toLowerCase();
+        let args: Array<String> = content.split(" ");
+
+        //Stop processing if comment is older than bot start date or doesn't start with keyword
+        if ( this.connectedAt > comment.created_utc ) return;
+        if (args[0] != '!save' && args[0] != '!send') return; 
+        if (args.length < 2) return;
+        let key: string = args.slice(1, args.length).join(" ");
+
+        //Run through respective pipe process.
+        if (args[0] == '!save') {
+            await this.save(comment, key);
+            return;
+        } else if (args[0] == '!send') {
+            await this.send(comment, key);
+            return;
+        } else {
+            log(Level.Warning, "Invalid command");
+            return;
+        }
+    }
+
+    //Save function. Runs when a save comment is detected.
     private async save(comment: Comment, name: string) {
         log(Level.Info, `Save requested by u/${comment.author.name}`);
 
+        //Extract the pasta to be saved and send it to the database request function.
         let pasta: string = await this.extractParentContent(comment.parent_id);
         let response: DbResponse = await DatabaseRequest.save(name, pasta);
+
+        //Wait for the requester to make the http request and extract the error and 
+        //handle it with a success reply or a fail reply.
         if (response.success) 
             await this.reply2thread(comment, "Saved. Use the command " + "` !send "+ `${name}` + " ` to paste");
         else {
@@ -97,10 +109,15 @@ export class Bot {
         }
     }
 
+    //Send function, runs when a send comment is detected.
     private async send(comment: Comment, name: string) {
         log(Level.Info, `Send requested by u/${comment.author.name}`);
 
+        //Send the pasta name to the database request function.
         let response: DbResponse = await DatabaseRequest.send(name);
+
+        //Wait for the requester to make a http request and extract any errors,
+        //then handle the errors or send the pasta successfully.
         if (response.success && response.data) 
             await this.reply2thread(comment, response.data);
         else {
