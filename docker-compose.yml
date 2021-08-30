@@ -13,6 +13,7 @@ services:
     container_name: "PastaBackend"
     volumes:
       - "./husky/pastas.db:/app/pastas.db" # Copy local Sqlite file into running directory for use.
+      - "./husky/.env:/app/.env"
     ports:
       - "8000:8000"
       # change to 8083:8000 for server production
