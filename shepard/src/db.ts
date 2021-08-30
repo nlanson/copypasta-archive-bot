@@ -50,7 +50,8 @@ export class DatabaseRequest {
         if (!process.env.auth_key) return newDbRes(false, Err.ENV_KEY_UNDETECTED);
          
         //Set request params
-        let url: string = /*'http://localhost:8000/save';*/ 'http://host.docker.internal:8000/save';
+        let host: string = (process.env.db_host) ? process.env.db_host : 'localhost';
+        let url: string = 'http://' + host + ':8000/save';
         let data: SaveRequest = {
             key: process.env.auth_key,
             name: name,
@@ -89,7 +90,8 @@ export class DatabaseRequest {
         if (!process.env.auth_key) return newDbRes(false, Err.ENV_KEY_UNDETECTED);
          
         //Set request params
-        let url: string = /*'http://localhost:8000/send';*/ 'http://host.docker.internal:8000/send';
+        let host: string = (process.env.db_host) ? process.env.db_host : 'localhost';
+        let url: string = 'http://' + host + ':8000/send';
         let data: SendRequest = {
             key: process.env.auth_key,
             name: name
@@ -118,5 +120,12 @@ export class DatabaseRequest {
             log(Level.Error, error.message);
             return newDbRes(false, Err.UNKNOWN);
         }
+    }
+
+    public static url(): string {
+        let host: string = (process.env.db_host) ? process.env.db_host : 'localhost';
+        let url: string = 'http://' + host + ':8000/send';
+
+        return url;
     }
 }
