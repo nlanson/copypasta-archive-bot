@@ -1,4 +1,6 @@
 use serde::{Serialize, Deserialize};  
+use dotenv::dotenv;
+use std::env;
 use crate::{
     log
 };
@@ -29,7 +31,8 @@ impl Response {
 //This function will check the key sent as part of the request and validate it against the hashed key stored below.
 //If the key sent in hashes into the same stored hashed key the request can continue.
 pub fn check_key(key: &str) -> bool {
-    let hashed_key = "578fb4d629c3a508df141858e20bcdb3";
+    dotenv().expect(".env file not found");
+    let hashed_key = format!("{:x}", md5::compute(env::var("auth_key").unwrap()));
     if format!("{:x}", md5::compute(key)) == hashed_key {
         true
     } else {
